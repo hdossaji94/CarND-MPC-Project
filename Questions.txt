@@ -1,0 +1,30 @@
+1. The Model: Student describes their model in detail. This includes the state, actuators and update equations.
+
+	This project used a kinematic model which included the values below. 
+
+	x[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
+	y[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
+	psi[t] = psi[t-1] + v[t-1] / Lf * delta[t-1] * dt
+	v[t] = v[t-1] + a[t-1] * dt
+	cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
+	epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
+
+	The x,y is the cars position, the psi is th car's heading direction, the v is the car's velocity, the cte is the cross-track error, and epsi is the orientation error. "A" is th cars acceleration and delta is the steering angle which are both the actuator outputs. This model uses both the state of the car and the actuations from previous timestamps to calculate for the current timestamp. 
+
+
+2. Timestep Length and Elapsed Duration (N & dt): Student discusses the reasoning behind the chosen N (timestep length) and dt (elapsed duration between timesteps) values. Additionally the student details the previous values tried.
+
+	The values for N & dt were chosen as advised from Udacity's lessons. N is 10 and dt is 0.1. These points impact the controller's performance significantly. When adjusting these amounts to values such 6/0.15 or 20/0.05 the behavior was eratic. Often times the controller would be too slow or too fast. 
+
+
+
+3. Polynomial Fitting and MPC Preprocessing: A polynomial is fitted to waypoints.
+If the student preprocesses waypoints, the vehicle state, and/or actuators prior to the MPC procedure it is described.
+
+	The simulator provides the waypoints which are then tranformed to the car coordinate system at the main.cpp file. A 3rd degree polynomial is used as taught by Udacity to the waypoints. These coefficients are used in order to calculate the cross track error and orientation error. 
+
+
+4. Model Predictive Control with Latency: The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
+
+
+	In order to counter act the latenecy problem, main.cpp uses the model and delay inteval to calculate the state values. Instead of the previous initial ones, these values are used instead. This helps to solve this problem. 
