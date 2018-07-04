@@ -91,6 +91,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double delta= j[1]["steering_angle"];
+          double a = j[1]["throttle"];
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -99,34 +101,50 @@ int main() {
           *
           */
 
-          vector<double> waypoints_x;
-          vector<double> waypoints_y;
-
-          // transform waypoints to be from car's perspective
-          // this means we can consider px = 0, py = 0, and psi = 0
-          // greatly simplifying future calculations
-          for (int i = 0; i < ptsx.size(); i++) {
-            double dx = ptsx[i] - px;
-            double dy = ptsy[i] - py;
-            waypoints_x.push_back(dx * cos(-psi) - dy * sin(-psi));
-            waypoints_y.push_back(dx * sin(-psi) + dy * cos(-psi));
+          // Preprocessing.
+          // Transforms waypoints coordinates to the cars coordinates.
+          size_t n_waypoints = ptsx.size();
+          auto ptsx_transformed = Eigen::VectorXd(n_waypoints);
+          auto ptsy_transformed = Eigen::VectorXd(n_waypoints);
+          for (unsigned int i = 0; i < n_waypoints; i++ ) {
+            double dX = ptsx[i] - px;
+            double dY = ptsy[i] - py;
+            double minus_psi = 0.0 - psi;
+            ptsx_transformed( i ) = dX * cos( minus_psi ) - dY * sin( minus_psi );
+            ptsy_transformed( i ) = dX * sin( minus_psi ) + dY * cos( minus_psi );
           }
 
-          double* ptrx = &waypoints_x[0];
-          double* ptry = &waypoints_y[0];
-          Eigen::Map<Eigen::VectorXd> waypoints_x_eig(ptrx, 6);
-          Eigen::Map<Eigen::VectorXd> waypoints_y_eig(ptry, 6);
+          // Fit polynomial to the points - 3rd order.
+          auto coeffs = polyfit(ptsx_transformed, ptsy_transformed, 3);
 
-          auto coeffs = polyfit(waypoints_x_eig, waypoints_y_eig, 3);
-          double cte = polyeval(coeffs, 0);  // px = 0, py = 0
-          double epsi = -atan(coeffs[1]);  // p
+          // Actuator delay in milliseconds.
+          const int actuatorDelay =  100;
 
-          double steer_value = j[1]["steering_angle"];
-          double throttle_value = j[1]["throttle"];
+          // Actuator delay in seconds.
+          const double delay = actuatorDelay / 1000.0;
 
+          // Initial state.
+          const double x0 = 0;
+          const double y0 = 0;
+          const double psi0 = 0;
+          const double cte0 = coeffs[0];
+          const double epsi0 = -atan(coeffs[1]);
+
+          // State after delay.
+          double x_delay = x0 + ( v * cos(psi0) * delay );
+          double y_delay = y0 + ( v * sin(psi0) * delay );
+          double psi_delay = psi0 - ( v * delta * delay / mpc.Lf );
+          double v_delay = v + a * delay;
+          double cte_delay = cte0 + ( v * sin(epsi0) * delay );
+          double epsi_delay = epsi0 - ( v * atan(coeffs[1]) * delay / mpc.Lf );
+
+          // Define the state vector.
           Eigen::VectorXd state(6);
-          state << 0, 0, 0, v, cte, epsi;
+          state << x_delay, y_delay, psi_delay, v_delay, cte_delay, epsi_delay;
+
+          // Find the MPC solution.
           auto vars = mpc.Solve(state, coeffs);
+
           steer_value = vars[0];
           throttle_value = vars[1];
 
