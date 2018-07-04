@@ -9,12 +9,12 @@
 	cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
 	epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
 
-	The x,y is the cars position, the psi is th car's heading direction, the v is the car's velocity, the cte is the cross-track error, and epsi is the orientation error. "A" is th cars acceleration and delta is the steering angle which are both the actuator outputs. This model uses both the state of the car and the actuations from previous timestamps to calculate for the current timestamp. 
+	The x,y is the cars position, the psi is th car's heading direction, the v is the car's velocity, the cte is the cross-track error, and epsi is the orientation error. "A" is the cars acceleration and delta is the steering angle which are both the actuator outputs. This model uses both the state of the car and the actuations from previous timestamps to calculate for the current timestamp. 
 
 
 2. Timestep Length and Elapsed Duration (N & dt): Student discusses the reasoning behind the chosen N (timestep length) and dt (elapsed duration between timesteps) values. Additionally the student details the previous values tried.
 
-	The values for N & dt were chosen as advised from Udacity's lessons. N is 10 and dt is 0.1. These points impact the controller's performance significantly. When adjusting these amounts to values such 6/0.15 or 20/0.05 the behavior was eratic. Often times the controller would be too slow or too fast. 
+	The values for N & dt were chosen as advised from Udacity's lessons. N is 10 and dt is 0.1. These points impact the controller's performance significantly. When adjusting these amounts to values such 6/0.15 or 20/0.05 the behavior was eratic. At higher N values the controller was very slow to respond while at lower N values the controller was not accurate. Often times the controller would be too slow or too fast. A smaller dt is better because you get a finer resolution. You would think a larger N is also better but at the expense of extra computational time. Therefore N should not be too large. N and dt together defines the prediction horizon. Shorter prediction horizons to allow you to have faster more responsive controllers but will lack in accuracy. On the other hand, longer prediction horizons will give better control but take extra computational time. 
 
 
 
